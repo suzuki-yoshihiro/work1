@@ -9,18 +9,16 @@ public class calculate_sales {
 	public static void main(String[] args){
 		ArrayList<Branch> branchList = new ArrayList<Branch>();
 		ArrayList<Commodity> commodityList = new ArrayList<Commodity>();
-//		ArrayList<String> branchData = new ArrayList<String>();
-		ArrayList<String> commodityData = new ArrayList<String>();
-		
+	
 		File file;
 		FileReader fr;
 		BufferedReader br;
 		String[] tmp;
 		String s = "";
-		int i;
+
 		
 		try{
-			i = 0;
+
 			file = new File(args[0] + "\\branch.lst");
 			fr = new FileReader(file);
 			br = new BufferedReader(fr);
@@ -43,7 +41,7 @@ public class calculate_sales {
 		System.out.println("================================");
 
 		try{
-			i = 0;
+
 			file = new File(args[0] + "\\commodity.lst");
 			fr = new FileReader(file);
 			br = new BufferedReader(fr);
@@ -61,9 +59,19 @@ public class calculate_sales {
 			System.out.println(e);
 			return;
 		}
-
-		}
+		String[] rcd = new String[100];
+		File folder = new File(args[0]);
+		String[] filelist = folder.list();
 
 		
+		for(int i = 0; i < filelist.length; i++){
+			if(filelist[i].contains("rcd")){
+				rcd[i] = filelist[i];
+				System.out.println(rcd[i]);
+			}
+		}
 	}
+
+		
+}
 
