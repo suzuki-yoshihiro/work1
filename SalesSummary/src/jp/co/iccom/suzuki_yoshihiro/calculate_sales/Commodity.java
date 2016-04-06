@@ -1,4 +1,9 @@
 package jp.co.iccom.suzuki_yoshihiro.calculate_sales;
 public class Commodity {
-	String code, name;
+	String cCode, cName;
+	
+	Commodity(String code, String name){
+		this.cCode = code;
+		this.cName = name;
+	}
 }

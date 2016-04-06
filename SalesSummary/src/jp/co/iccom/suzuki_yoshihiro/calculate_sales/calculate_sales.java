@@ -1,4 +1,5 @@
 package jp.co.iccom.suzuki_yoshihiro.calculate_sales;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -8,7 +9,7 @@ public class calculate_sales {
 	public static void main(String[] args){
 		ArrayList<Branch> branchList = new ArrayList<Branch>();
 		ArrayList<Commodity> commodityList = new ArrayList<Commodity>();
-		ArrayList<String> branchData = new ArrayList<String>();
+//		ArrayList<String> branchData = new ArrayList<String>();
 		ArrayList<String> commodityData = new ArrayList<String>();
 		
 		File file;
@@ -16,7 +17,7 @@ public class calculate_sales {
 		BufferedReader br;
 		String[] tmp;
 		String s = "";
-		int i, j;
+		int i;
 		
 		try{
 			i = 0;
@@ -25,16 +26,21 @@ public class calculate_sales {
 			br = new BufferedReader(fr);
 			while((s = br.readLine()) != null){
 				tmp = s.split(",");
-				branchList.add(new Branch(Integer.parseInt(tmp[0]), tmp[1]));
-				System.out.println(branchList.get(i));
-				i++;
+				branchList.add(new Branch(tmp[0], tmp[1]));
+
 			}
 			br.close();
+			for(Branch b : branchList){
+				System.out.println("支店番号：" + b.bCode + "　支店名：" + b.bName);
+			}
+
 		}
 		catch(Exception e){
 			System.out.println(e);
 			return;
 		}
+		
+		System.out.println("================================");
 
 		try{
 			i = 0;
@@ -42,11 +48,14 @@ public class calculate_sales {
 			fr = new FileReader(file);
 			br = new BufferedReader(fr);
 			while((s = br.readLine()) != null){
-				commodityData.add(s);
-				System.out.println(commodityData.get(i));
-				i++;
+				tmp = s.split(",");
+				commodityList.add(new Commodity(tmp[0], tmp[1]));
 			}
 			br.close();
+			
+			for(Commodity c : commodityList){
+				System.out.println("商品番号：" + c.cCode + "　商品名：" + c.cName);
+			}
 		}
 		catch(Exception e){
 			System.out.println(e);
