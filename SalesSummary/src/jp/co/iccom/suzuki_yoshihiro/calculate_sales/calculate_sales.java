@@ -20,32 +20,46 @@ public class calculate_sales {
 		 * 変数宣言
 		 */
 
-		HashMap<String, String> branchMapIn = new HashMap<String, String>();
-		HashMap<String, String> commodityMapIn = new HashMap<String, String>();
-		HashMap<String, Long> branchMapOut = new HashMap<String, Long>();
-		HashMap<String, Long> commodityMapOut = new HashMap<String, Long>();
-		ArrayList<Proceeds> proceedsList = new ArrayList<Proceeds>();
-		ArrayList<Branch> branchList = new ArrayList<Branch>();
-		ArrayList<Commodity> commodityList = new ArrayList<Commodity>();
+		// HashMap・ArrayListの宣言
 
-		File file;
-		File folder = new File(args[0]);	// フォルダ情報の格納
+		HashMap<String, String> branchMapIn = new HashMap<String, String>();	// 支店情報
+		HashMap<String, String> commodityMapIn = new HashMap<String, String>();	// 商品情報
+		HashMap<String, Long> branchMapOut = new HashMap<String, Long>();		// 支店情報(売上集計処理後)
+		HashMap<String, Long> commodityMapOut = new HashMap<String, Long>();	// 商品情報(売上集計処理後)
+		ArrayList<Branch> branchList = new ArrayList<Branch>();					// 支店情報(集計後金額含む)
+		ArrayList<Commodity> commodityList = new ArrayList<Commodity>();		// 商品情報(集計後金額含む)
+		ArrayList<String> bCodeList = new ArrayList<String>();					// 支店コード用
+		ArrayList<String> cCodeList = new ArrayList<String>();					// 商品コード用
+
+		// Fileクラス
+
+		File file;																// ファイル操作用
+		File folder = new File(args[0]);										// フォルダ操作用
+
+		// ファイル読み込み
+
 		FileReader fr;
 		BufferedReader br = null;
+
+		// ファイル書き込み
 
 		FileWriter fw;
 		BufferedWriter bw;
 
-		String s = "";	// ファイルからの情報読み込み用
-		String ls = System.getProperty("line.separator");	// 改行コードの取得
-		String fs = System.getProperty("file.separator");	// ディレクトリ・ファイルパスの区切りの取得
-		String errmsg = "予期せぬエラーが発生しました";
-		String[] tmp;	// ファイルから読み込んだ情報を一時的に保管する
-		String[] rcd = new String[32768];		// レコードファイルのファイル名格納
-		String[] filelist = folder.list();
-		ArrayList<String> bCodeList = new ArrayList<String>();
-		ArrayList<String> cCodeList = new ArrayList<String>();
+		// 文字列型
 
+		String s = "";												// ファイルからの情報読み込み用
+		String ls = System.getProperty("line.separator");			// 改行コードの取得
+		String fs = System.getProperty("file.separator");			// ディレクトリ・ファイルパスの区切りの取得
+		String errmsg = "予期せぬエラーが発生しました";
+
+		// 文字列型配列
+
+		String[] tmp;												// ファイルから読み込んだ情報を一時的に保管する
+		String[] rcd = new String[32768];							// レコードファイルのファイル名格納
+		String[] filelist = folder.list();
+
+		// 整数型
 
 		int i, j, k;
 
@@ -128,7 +142,7 @@ public class calculate_sales {
 
 
 		/*
-		 * 売上レコードファイル読み込み
+		 * 売上レコードファイル読み込み及び集計処理
 		 */
 
 		j= 0;
@@ -172,7 +186,7 @@ public class calculate_sales {
 					if(tmp[0].equals(bCodeList.get(l))){
 						long cal = branchMapOut.get(tmp[0]);
 						cal += Long.parseLong(tmp[2]);
-						if(String.valueOf(cal).length() >= 10){
+						if(String.valueOf(cal).length() >= 10){		//合計金額の桁数を判定
 							System.out.println("合計金額が10桁を超えました");
 							System.out.println(String.valueOf(cal));
 							return ;
@@ -186,7 +200,7 @@ public class calculate_sales {
 					if(tmp[1].equals(cCodeList.get(l))){
 						long cal = commodityMapOut.get(tmp[1]);
 						cal += Long.parseLong(tmp[2]);
-						if(String.valueOf(cal).length() >= 10){
+						if(String.valueOf(cal).length() >= 10){		//合計金額の桁数を判定
 							System.out.println("合計金額が10桁を超えました");
 							System.out.println(String.valueOf(cal));
 							return ;
@@ -197,6 +211,11 @@ public class calculate_sales {
 					}
 				}
 
+				/*
+				 * 以下は、当該データが見当たらなかった場合に行う
+				 * エラーメッセージ出力処理
+				 */
+
 				if(!bflg){
 					System.out.println("<" + args[0] + fs + rcd[i] + ">の支店コードが不正です");
 					return ;
@@ -205,7 +224,7 @@ public class calculate_sales {
 					System.out.println("<" + args[0] + fs + rcd[i] + ">の商品コードが不正です");
 					return ;
 				}
-				proceedsList.add(new Proceeds(tmp[0], tmp[1], Long.parseLong(tmp[2])));
+
 
 			}
 
@@ -217,9 +236,7 @@ public class calculate_sales {
 		finally{
 			br.close();
 		}
-		for(Proceeds p : proceedsList){
-			System.out.println("支店番号：" + p.bCode + "　商品番号：" + p.cCode + "　売上金額：" + p.amount);
-		}
+
 
 
 		/*
@@ -293,4 +310,3 @@ public class calculate_sales {
 	}
 
 }
-
