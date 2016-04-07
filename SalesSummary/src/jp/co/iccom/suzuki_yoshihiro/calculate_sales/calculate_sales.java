@@ -30,6 +30,7 @@ public class calculate_sales {
 		ArrayList<Commodity> commodityList = new ArrayList<Commodity>();		// 商品情報(集計後金額含む)
 		ArrayList<String> bCodeList = new ArrayList<String>();					// 支店コード用
 		ArrayList<String> cCodeList = new ArrayList<String>();					// 商品コード用
+		ArrayList<String> fName = new ArrayList<String>();						// レコードファイルのファイル名用
 
 		// Fileクラス
 
@@ -230,7 +231,7 @@ public class calculate_sales {
 
 		}
 		catch(Exception e){
-			System.out.println(e);
+			System.out.println(errmsg);
 			return;
 		}
 		finally{
@@ -256,8 +257,10 @@ public class calculate_sales {
 						branchMapIn.get(obj.toString()),
 						branchMapOut.get(obj.toString())));
 
+
 				bw.write(obj.toString() + "," + branchMapIn.get((obj.toString())) + "," +
 				branchMapOut.get(obj.toString()) + ls);
+
 
 			}
 			for(Branch b : branchList){
@@ -266,7 +269,7 @@ public class calculate_sales {
 
 		}
 		catch(Exception e){
-			System.out.println(e);
+			System.out.println(errmsg);
 		}
 		finally{
 			bw.close();
@@ -291,6 +294,7 @@ public class calculate_sales {
 						commodityMapIn.get(obj.toString()),
 						commodityMapOut.get(obj.toString())));
 
+
 				bw.write(obj.toString() + "," + commodityMapIn.get((obj.toString())) + "," +
 				commodityMapOut.get(obj.toString()) + ls);
 
@@ -301,7 +305,7 @@ public class calculate_sales {
 
 		}
 		catch(Exception e){
-			System.out.println(e);
+			System.out.println(errmsg);
 		}
 		finally{
 			bw.close();
