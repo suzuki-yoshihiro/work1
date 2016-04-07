@@ -4,9 +4,9 @@ public class Branch {
 	String bCode, bName;
 	long bAmount;
 	
-//	Branch(String code, String name){
-//		this.bCode = code;
-//		this.bName = name;
-//		this.bAmount = 0;
-//	}
+	Branch(String code, String name, long amount){
+		this.bCode = code;
+		this.bName = name;
+		this.bAmount = amount;
+	}
 }

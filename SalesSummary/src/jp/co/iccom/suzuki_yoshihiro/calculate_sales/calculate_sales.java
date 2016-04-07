@@ -1,49 +1,59 @@
 package jp.co.iccom.suzuki_yoshihiro.calculate_sales;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 
 public class calculate_sales {
 	public static void main(String[] args) throws IOException{
-		
+
+
 		/*
 		 * 変数宣言
 		 */
-		
-	
+
 		HashMap<String, String> branchMapIn = new HashMap<String, String>();
 		HashMap<String, String> commodityMapIn = new HashMap<String, String>();
 		HashMap<String, Long> branchMapOut = new HashMap<String, Long>();
 		HashMap<String, Long> commodityMapOut = new HashMap<String, Long>();
 		ArrayList<Proceeds> proceedsList = new ArrayList<Proceeds>();
-	
+		ArrayList<Branch> branchList = new ArrayList<Branch>();
+		ArrayList<Commodity> commodityList = new ArrayList<Commodity>();
+
 		File file;
+		File folder = new File(args[0]);	// フォルダ情報の格納
 		FileReader fr;
 		BufferedReader br = null;
-		String[] tmp;	// ファイルから読み込んだ情報を一時的に保管する
+
+		FileWriter fw;
+		BufferedWriter bw;
+
 		String s = "";	// ファイルからの情報読み込み用
 		String ls = System.getProperty("line.separator");	// 改行コードの取得
 		String fs = System.getProperty("file.separator");	// ディレクトリ・ファイルパスの区切りの取得
-
-		String[] rcd = new String[32768];		// レコードファイルのファイル名格納
-		File folder = new File(args[0]);	// フォルダ情報の格納
-		String[] filelist = folder.list();	
 		String errmsg = "予期せぬエラーが発生しました";
+		String[] tmp;	// ファイルから読み込んだ情報を一時的に保管する
+		String[] rcd = new String[32768];		// レコードファイルのファイル名格納
+		String[] filelist = folder.list();
+		ArrayList<String> bCodeList = new ArrayList<String>();
+		ArrayList<String> cCodeList = new ArrayList<String>();
 
-		
+
 		int i, j, k;
-		
-		
+
+
 		/*
 		 * 支店情報ファイル読み込み
 		 */
-	
+
 		try{
 
 			file = new File(args[0] + fs + "branch.lst");
@@ -60,6 +70,7 @@ public class calculate_sales {
 				int code = Integer.parseInt(tmp[0]);
 				branchMapIn.put(tmp[0], tmp[1]);
 				branchMapOut.put(tmp[0], new Long(0));
+				bCodeList.add(tmp[0]);
 			}
 		}
 		catch(FileNotFoundException e){		// 支店定義ファイルが見つからなかった場合の処理
@@ -78,11 +89,11 @@ public class calculate_sales {
 			br.close();
 		}
 
-		
+
 		/*
 		 * 商品情報ファイル読み込み
 		 */
-		
+
 		try{
 
 			file = new File(args[0] + fs + "commodity.lst");
@@ -91,19 +102,20 @@ public class calculate_sales {
 			while((s = br.readLine()) != null){
 				tmp = s.split(",");
 				// フィールド数の及び商品コードの文字数判定、規定以上の場合、エラーメッセージを表示し強制終了
-				if(tmp.length >= 3 || tmp[0].length() != 8){	
+				if(tmp.length >= 3 || tmp[0].length() != 8){
 					System.out.println("商品定義ファイルのフォーマットが不正です");
 					return ;
 				}
 				commodityMapIn.put(tmp[0], tmp[1]);	// 商品定義用ArrayListへ要素の追加
 				commodityMapOut.put(tmp[0], new Long(0));
+				cCodeList.add(tmp[0]);
 			}
-			
-			
+
+
 
 		}
 		catch(FileNotFoundException e){		// 商品定義ファイルが見つからなかった場合の例外処理
-			System.out.println("商品定義ファイルが存在しません");	
+			System.out.println("商品定義ファイルが存在しません");
 			return;
 		}
 		catch(Exception e){		// その他の例外に対する処理
@@ -113,15 +125,15 @@ public class calculate_sales {
 		finally{
 			br.close();
 		}
-		
-		System.out.println("===========================================================");
+
+
 		/*
 		 * 売上レコードファイル読み込み
 		 */
-		
+
 		j= 0;
 		for(i = 0; i < filelist.length; i++){
-			
+
 			if(filelist[i].contains("rcd")){
 				rcd[j] = filelist[i];
 				j++;
@@ -134,12 +146,15 @@ public class calculate_sales {
 			}
 		}
 		try{
+
 			for(i = 0; i < j; i++){
+
 				k = 0;
 				tmp = new String[3];
 				file = new File(args[0] + fs + rcd[i]);
 				fr = new FileReader(file);
 				br = new BufferedReader(fr);
+
 				while((s = br.readLine()) != null){
 					if(k >= 3){
 						System.out.println("<" + args[0] + fs + rcd[i] + ">のフォーマットが不正です");
@@ -147,24 +162,135 @@ public class calculate_sales {
 					}
 					tmp[k] = s;
 					k++;
-					
+
+				}
+
+				boolean bflg = false;
+				boolean cflg = false;
+
+				for(int l = 0; l < bCodeList.size(); l++){
+					if(tmp[0].equals(bCodeList.get(l))){
+						long cal = branchMapOut.get(tmp[0]);
+						cal += Long.parseLong(tmp[2]);
+						if(String.valueOf(cal).length() >= 10){
+							System.out.println("合計金額が10桁を超えました");
+							System.out.println(String.valueOf(cal));
+							return ;
+						}
+						branchMapOut.put(tmp[0], cal);
+						System.out.println(branchMapOut.entrySet());
+						bflg = true;
+					}
+				}
+				for(int l = 0; l < cCodeList.size(); l++){
+					if(tmp[1].equals(cCodeList.get(l))){
+						long cal = commodityMapOut.get(tmp[1]);
+						cal += Long.parseLong(tmp[2]);
+						if(String.valueOf(cal).length() >= 10){
+							System.out.println("合計金額が10桁を超えました");
+							System.out.println(String.valueOf(cal));
+							return ;
+						}
+						commodityMapOut.put(tmp[1], cal);
+						System.out.println(commodityMapOut.entrySet());
+						cflg = true;
+					}
+				}
+
+				if(!bflg){
+					System.out.println("<" + args[0] + fs + rcd[i] + ">の支店コードが不正です");
+					return ;
+				}
+				if(!cflg){
+					System.out.println("<" + args[0] + fs + rcd[i] + ">の商品コードが不正です");
+					return ;
 				}
 				proceedsList.add(new Proceeds(tmp[0], tmp[1], Long.parseLong(tmp[2])));
+
 			}
-		}		
+
+		}
 		catch(Exception e){
 			System.out.println(e);
 			return;
 		}
 		finally{
-			br.close();	
+			br.close();
 		}
 		for(Proceeds p : proceedsList){
 			System.out.println("支店番号：" + p.bCode + "　商品番号：" + p.cCode + "　売上金額：" + p.amount);
 		}
-		
-		
+
+
+		/*
+		 * 支店別売上集計後ファイル書き出し
+		 */
+
+		file = new File(args[0] + fs + "branch.out");
+		fw = new FileWriter(file);
+		bw = new BufferedWriter(fw);
+		try{
+			Iterator<String> itIn = branchMapIn.keySet().iterator();
+
+			while(itIn.hasNext()){
+				Object obj = itIn.next();
+				branchList.add(new Branch(
+						obj.toString(),
+						branchMapIn.get(obj.toString()),
+						branchMapOut.get(obj.toString())));
+
+				bw.write(obj.toString() + "," + branchMapIn.get((obj.toString())) + "," +
+				branchMapOut.get(obj.toString()) + ls);
+
+			}
+			for(Branch b : branchList){
+				System.out.println("支店コード：" + b.bCode + "　支店名：" + b.bName + "　売上：" + b.bAmount);
+			}
+
+		}
+		catch(Exception e){
+			System.out.println(e);
+		}
+		finally{
+			bw.close();
+		}
+
+
+		/*
+		 * 商品別売上集計後ファイル書き出し
+		 */
+
+
+		file = new File(args[0] + fs + "commodity.out");
+		fw = new FileWriter(file);
+		bw = new BufferedWriter(fw);
+		try{
+			Iterator<String> itIn = commodityMapIn.keySet().iterator();
+
+			while(itIn.hasNext()){
+				Object obj = itIn.next();
+				commodityList.add(new Commodity(
+						obj.toString(),
+						commodityMapIn.get(obj.toString()),
+						commodityMapOut.get(obj.toString())));
+
+				bw.write(obj.toString() + "," + commodityMapIn.get((obj.toString())) + "," +
+				commodityMapOut.get(obj.toString()) + ls);
+
+			}
+			for(Commodity c : commodityList){
+				System.out.println("商品コード：" + c.cCode + "　商品名：" + c.cName + "　売上：" + c.cAmount);
+			}
+
+		}
+		catch(Exception e){
+			System.out.println(e);
+		}
+		finally{
+			bw.close();
+		}
+
 	}
-		
+
 }
 

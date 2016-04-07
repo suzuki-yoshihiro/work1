@@ -3,9 +3,9 @@ public class Commodity {
 	String cCode, cName;
 	long cAmount;
 	
-//	Commodity(String code, String name){
-//		this.cCode = code;
-//		this.cName = name;
-//		this.cAmount = 0;
-//	}
+	Commodity(String code, String name, long amount){
+		this.cCode = code;
+		this.cName = name;
+		this.cAmount = amount;
+	}
 }
