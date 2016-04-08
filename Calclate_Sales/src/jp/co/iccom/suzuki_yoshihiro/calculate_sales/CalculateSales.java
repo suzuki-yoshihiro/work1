@@ -39,10 +39,10 @@ public class CalculateSales {
 		HashMap<String, String> branchMapIn = new HashMap<String, String>();// 支店コード・支店名
 		HashMap<String, Long> branchMapOut = new HashMap<String, Long>();	// 支店コード・売上高
 		ArrayList<String> branchCodeList = new ArrayList<String>();			// 支店コード用
-		File fileBranchIn = new File(folder, "branch.lst");								// 第一引数のパスと区切り文字、ファイル名
-		BufferedReader brBranchRead = new BufferedReader(new FileReader(fileBranchIn));
+		BufferedReader brBranchReader = new BufferedReader(new FileReader(new File(folder, "branch.lst")));
 		try{
-			while((reader = brBranchRead.readLine()) != null){		// カンマ(,)で内容を区切り、一時保存用の配列へ保存
+			while((reader = brBranchReader.readLine()) != null){
+				// カンマ(,)で内容を区切り、一時保存用の配列へ保存
 				separatedValues = reader.split(",");
 
 				// フィールド数及び支店番号の判定、3以上の場合、エラーメッセージを表示し強制終了
@@ -51,15 +51,19 @@ public class CalculateSales {
 					System.out.println("支店定義ファイルのフォーマットが不正です");
 					return;
 				}
-				Integer.parseInt(separatedValues[0]);		// 支店コードに当たる部分の文字を数字に変換し、エラーを吐くか調べる
-				branchMapIn.put(separatedValues[0], separatedValues[1]);		// 支店コードをキーに、支店名を値として保存
+				// 支店コードに当たる部分の文字を数字に変換し、エラーを吐くか調べる
+				Integer.parseInt(separatedValues[0]);
+				// 支店コードをキーに、支店名を値として保存
+				branchMapIn.put(separatedValues[0], separatedValues[1]);		
 				// 支店コードをキーに、売上金額を値(計算前なので0)として保存
 				branchMapOut.put(separatedValues[0], new Long(0));
-				branchCodeList.add(separatedValues[0]);		// 支店コードをString型のArrayListに追加
+				// 支店コードをString型のArrayListに追加
+				branchCodeList.add(separatedValues[0]);		
 			}
 
 		}
-		catch(FileNotFoundException e){		// 支店定義ファイルが見つからなかった場合の処理
+		// 支店定義ファイルが見つからなかった場合の処理
+		catch(FileNotFoundException e){		
 			System.out.println("支店定義ファイルが存在しません");
 			return;
 		}
@@ -72,7 +76,7 @@ public class CalculateSales {
 			return;
 		}
 		finally{
-			brBranchRead.close();
+			brBranchReader.close();
 		}
 
 
@@ -83,12 +87,11 @@ public class CalculateSales {
 		HashMap<String, String> commodityMapIn = new HashMap<String, String>();			// 商品コード・商品名
 		HashMap<String, Long> commodityMapOut = new HashMap<String, Long>();			// 商品コード・売上高
 		ArrayList<String> commodityCodeList = new ArrayList<String>();					// 商品コード用
-		File fileCommodityIn = new File(folder, "commodity.lst");
-		BufferedReader brCommodityRead = new BufferedReader(new FileReader(fileCommodityIn));
+		BufferedReader brCommodityReader = new BufferedReader(new FileReader(new File(folder, "commodity.lst")));
 		try{
 
 
-			while((reader = brCommodityRead.readLine()) != null){
+			while((reader = brCommodityReader.readLine()) != null){
 				separatedValues = reader.split(",");
 				// フィールド数の及び商品コードの文字数判定、規定以上の場合、エラーメッセージを表示し強制終了
 				if(separatedValues.length >= 3 || separatedValues[0].length() != 8 ||
@@ -101,16 +104,19 @@ public class CalculateSales {
 				commodityCodeList.add(separatedValues[0]);
 			}
 		}
-		catch(FileNotFoundException e){		// 商品定義ファイルが見つからなかった場合の例外処理
+		catch(FileNotFoundException e){
+			// 商品定義ファイルが見つからなかった場合の例外処理
 			System.out.println("商品定義ファイルが存在しません");
 			return;
 		}
-		catch(Exception e){		// その他の例外に対する処理
+		catch(Exception e){
+			// その他の例外に対する処理
 			System.out.println("予期せぬエラーが発生しました");
 			return;
 		}
 		finally{
-			brCommodityRead.close();
+			// BufferedReaderのクローズ処理
+			brCommodityReader.close();
 		}
 
 		/*
@@ -119,7 +125,7 @@ public class CalculateSales {
 
 		// 引数で指定したディレクトリ内にある"*.rcd"ファイルの一覧を取得
 
-		ArrayList<String> rcdList = new ArrayList<String>();						// レコードファイルのファイル名格納
+		ArrayList<String> rcdList = new ArrayList<String>();		// レコードファイルのファイル名格納
 		String[] filelist = folder.list();							// カレントディレクトリのファイル一覧
 		for(i = 0; i < filelist.length; i++){
 			if(filelist[i].contains("rcd")){
@@ -137,11 +143,11 @@ public class CalculateSales {
 		// rcdファイルの読み込み
 		for(i = 0; i < rcdList.size(); i++){
 			File fileRcdIn = new File(folder, rcdList.get(i));
-			BufferedReader brRcdRead = new BufferedReader(new FileReader(fileRcdIn));
+			BufferedReader brRcdReader = new BufferedReader(new FileReader(fileRcdIn));
 			try{
 				k = 0;
 				separatedValues = new String[3];
-				while((reader = brRcdRead.readLine()) != null){
+				while((reader = brRcdReader.readLine()) != null){
 
 					// rcdファイルの行数を調べ、4行以上あった場合はエラーメッセージを表示し終了
 					if(k >= 4){
@@ -200,7 +206,7 @@ public class CalculateSales {
 				return;
 			}
 			finally{
-			brRcdRead.close();
+			brRcdReader.close();
 			}
 		}
 
@@ -208,8 +214,7 @@ public class CalculateSales {
 		 * 支店別売上集計後ファイル書き出し
 		 */
 
-		File fileBranchOut = new File(folder, "branch.out");
-		BufferedWriter bwBranchWrite = new BufferedWriter(new FileWriter(fileBranchOut));
+		BufferedWriter bwBranchWriter = new BufferedWriter(new FileWriter(new File(folder, "branch.out")));;
 		Branch[] branchArry = new Branch[branchCodeList.size()];
 		try{
 			for(i = 0; i < branchCodeList.size(); i++){
@@ -233,23 +238,22 @@ public class CalculateSales {
 			}
 			i = 0;
 			for(Branch b : branchArry){
-				bwBranchWrite.write(b.bCode + "," + b.bName + "," + b.bAmount + System.getProperty("line.separator"));
+				bwBranchWriter.write(b.bCode + "," + b.bName + "," + b.bAmount + System.getProperty("line.separator"));
 				System.out.println(b.bCode + "," + b.bName + "," + b.bAmount + System.getProperty("line.separator"));
 				i++;
 			}
 		}
 		catch(Exception e){
 			System.out.println("予期せぬエラーが発生しました");
-			e.printStackTrace();
 		}
 		finally{
-			bwBranchWrite.close();
+			bwBranchWriter.close();
 		}
 
 		/*
 		 * 商品別売上集計後ファイル書き出し
 		 */
-		BufferedWriter bwCommodityWrite = new BufferedWriter(new FileWriter(new File(folder, "commodity.out")));
+		BufferedWriter bwCommodityWriter = new BufferedWriter(new FileWriter(new File(folder, "commodity.out")));
 		Commodity[] commodityArry = new Commodity[commodityCodeList.size()];
 		try{
 			for(i = 0; i < commodityCodeList.size(); i++){
@@ -274,17 +278,16 @@ public class CalculateSales {
 			i = 0;
 			for(Commodity c : commodityArry){
 				System.out.println("書き込み" + (i + 1) + "行目");
-				bwCommodityWrite.write(c.cCode + "," + c.cName + "," + c.cAmount + System.getProperty("line.separator"));
+				bwCommodityWriter.write(c.cCode + "," + c.cName + "," + c.cAmount + System.getProperty("line.separator"));
 				System.out.println(c.cCode + "," + c.cName + "," + c.cAmount + System.getProperty("line.separator"));
 				i++;
 			}
 		}
 		catch(Exception e){
 			System.out.println("予期せぬエラーが発生しました");
-			e.printStackTrace();
 		}
 		finally{
-			bwCommodityWrite.close();
+			bwCommodityWriter.close();
 		}
 
 	}
