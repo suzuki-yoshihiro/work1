@@ -34,6 +34,7 @@ public class calculate_sales {
 		HashMap<String, Long> commodityMapOut = new HashMap<String, Long>();	// 商品情報(売上集計処理後)
 		ArrayList<String> bCodeList = new ArrayList<String>();					// 支店コード用
 		ArrayList<String> cCodeList = new ArrayList<String>();					// 商品コード用
+		ArrayList<String> rcd = new ArrayList<String>();						// レコードファイルのファイル名格納
 
 
 		// Fileクラス
@@ -61,8 +62,7 @@ public class calculate_sales {
 		// 文字列型配列
 
 		String[] tmp;												// ファイルから読み込んだ情報を一時的に保管する
-		String[] rcd = new String[32768];							// レコードファイルのファイル名格納
-		String[] filelist = folder.list();
+		String[] filelist = folder.list();							// カレントディレクトリのファイル一覧
 
 		// 整数型
 
@@ -75,10 +75,10 @@ public class calculate_sales {
 
 		try{
 
-			file = new File(args[0] + fs + "branch.lst");
+			file = new File(args[0] + fs + "branch.lst");	// 第一引数のパスと区切り文字、ファイル名
 			fr = new FileReader(file);
 			br = new BufferedReader(fr);
-			while((s = br.readLine()) != null){
+			while((s = br.readLine()) != null){		// カンマ(,)で内容を区切り、一時保存用の配列へ保存
 				tmp = s.split(",");
 
 				// フィールド数及び支店番号の判定、3以上の場合、エラーメッセージを表示し強制終了
@@ -87,10 +87,11 @@ public class calculate_sales {
 					br.close();
 					return ;
 				}
-				int code = Integer.parseInt(tmp[0]);		// 支店番号が数字のみで定義されているかどうかを判定
-				branchMapIn.put(tmp[0], tmp[1]);
-				branchMapOut.put(tmp[0], new Long(0));
-				bCodeList.add(tmp[0]);
+				Integer.parseInt(tmp[0]);		// 支店コードに当たる部分の文字を数字に変換し、エラーを吐くか調べる
+				branchMapIn.put(tmp[0], tmp[1]);		// 支店コードをキーに、支店名を値として保存
+				// 支店コードをキーに、売上金額を値(計算前なので0)として保存
+				branchMapOut.put(tmp[0], new Long(0));		
+				bCodeList.add(tmp[0]);		// 支店コードをString型のArrayListに追加
 
 			}
 			br.close();
@@ -148,19 +149,19 @@ public class calculate_sales {
 		 */
 
 		// 引数で指定したディレクトリ内にある"*.rcd"ファイルの一覧を取得
+		
 
 		j= 0;
 		for(i = 0; i < filelist.length; i++){
-
 			if(filelist[i].contains("rcd")){
-				rcd[j] = filelist[i];
+				rcd.add(filelist[i]);
 				j++;
 			}
 		}
 
 		// rcdファイルの名前が連番になっているかどうかを判定、なっていない場合はメッセージを出力し終了
 		for(i = 0; i < j - 1; i++){
-			if(Math.abs(rcd[i].compareTo(rcd[i + 1])) != 1){
+			if(Math.abs(rcd.get(i).compareTo(rcd.get(i + 1))) != 1){
 				System.out.println("売上ファイル名が連番になっていません");
 				return ;
 			}
@@ -171,7 +172,7 @@ public class calculate_sales {
 
 				k = 0;
 				tmp = new String[3];
-				file = new File(args[0] + fs + rcd[i]);
+				file = new File(args[0] + fs + rcd.get(i));
 				fr = new FileReader(file);
 				br = new BufferedReader(fr);
 
@@ -180,7 +181,7 @@ public class calculate_sales {
 					// rcdファイルの行数を調べ、4行以上あった場合はエラーメッセージを表示し終了
 
 					if(k > 4){
-						System.out.println("<" + args[0] + fs + rcd[i] + ">のフォーマットが不正です");
+						System.out.println("<" + args[0] + fs + rcd.get(i) + ">のフォーマットが不正です");
 						br.close();
 						return ;
 					}
@@ -205,7 +206,7 @@ public class calculate_sales {
 							return ;
 						}
 						branchMapOut.put(tmp[0], cal);
-						System.out.println(branchMapOut.entrySet());
+//						System.out.println(branchMapOut.entrySet());
 						bflg = true;
 					}
 				}
@@ -219,7 +220,7 @@ public class calculate_sales {
 							return ;
 						}
 						commodityMapOut.put(tmp[1], cal);
-						System.out.println(commodityMapOut.entrySet());
+//						System.out.println(commodityMapOut.entrySet());
 						cflg = true;
 					}
 				}
@@ -230,11 +231,11 @@ public class calculate_sales {
 				 */
 
 				if(!bflg){
-					System.out.println("<" + args[0] + fs + rcd[i] + ">の支店コードが不正です");
+					System.out.println("<" + args[0] + fs + rcd.get(i) + ">の支店コードが不正です");
 					return ;
 				}
 				if(!cflg){
-					System.out.println("<" + args[0] + fs + rcd[i] + ">の商品コードが不正です");
+					System.out.println("<" + args[0] + fs + rcd.get(i) + ">の商品コードが不正です");
 					return ;
 				}
 
@@ -256,20 +257,22 @@ public class calculate_sales {
 		fw = new FileWriter(file);
 		bw = new BufferedWriter(fw);
 		bArry = new Branch[bCodeList.size()];
-		System.out.println(bArry.length);
 		try{
 			Iterator<String> itIn = branchMapIn.keySet().iterator();
 			i = 0;
 			while(itIn.hasNext()){
 				Object obj = itIn.next();
+				// Branchクラスの配列にHasMapの値を格納
 				bArry[i] = new Branch(
 						obj.toString(),
 						branchMapIn.get(obj.toString()),
-						branchMapOut.get(obj.toString()));
+						branchMapOut.get(obj.toString())
+						);
 
 				i++;
 			}
 
+			// 単純選択法による金額順の並べ替え
 			for(i = 0; i < bArry.length -1; i++){
 				for(j = i + 1; j < bArry.length; j++){
 					if(bArry[i].bAmount < bArry[j].bAmount){
@@ -280,10 +283,11 @@ public class calculate_sales {
 				}
 			}
 			for(Branch b : bArry){
-				System.out.println("支店コード：" + b.bCode + "　支店名：" + b.bName + "　売上：" + b.bAmount);
+//				System.out.println("支店コード：" + b.bCode + "　支店名：" + b.bName + "　売上：" + b.bAmount);
 				bw.write(b.bCode + "," + b.bName + "," + b.bAmount + ls);
 			}
 			bw.close();
+//			System.out.println("==============================================================");
 		}
 		catch(Exception e){
 			System.out.println(errmsg);
@@ -304,13 +308,16 @@ public class calculate_sales {
 			i = 0;
 			while(itIn.hasNext()){
 				Object obj = itIn.next();
-
+				
+				// Commodityクラスの配列にHasMapの値を格納
 				cArry[i] = new Commodity(
 						obj.toString(),
 						commodityMapIn.get(obj.toString()),
-						commodityMapOut.get(obj.toString()));
+						commodityMapOut.get(obj.toString())
+						);
 				i++;
 			}
+			// 単純選択法による金額降順ソート
 			for(i = 0; i < cArry.length -1; i++){
 				for(j = i + 1; j < cArry.length; j++){
 					if(cArry[i].cAmount < cArry[j].cAmount){
@@ -321,7 +328,7 @@ public class calculate_sales {
 				}
 			}
 			for(Commodity c : cArry){
-				System.out.println("支店コード：" + c.cCode + "　支店名：" + c.cName + "　売上：" + c.cAmount);
+//				System.out.println("商品コード：" + c.cCode + "　商品名：" + c.cName + "　売上：" + c.cAmount);
 				bw.write(c.cCode + "," + c.cName + "," + c.cAmount + ls);
 			}
 			bw.close();
