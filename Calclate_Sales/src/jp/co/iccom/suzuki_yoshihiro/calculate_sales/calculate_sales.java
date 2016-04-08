@@ -34,7 +34,7 @@ public class calculate_sales {
 		HashMap<String, Long> commodityMapOut = new HashMap<String, Long>();	// 商品情報(売上集計処理後)
 		ArrayList<String> bCodeList = new ArrayList<String>();					// 支店コード用
 		ArrayList<String> cCodeList = new ArrayList<String>();					// 商品コード用
-		
+
 
 		// Fileクラス
 
@@ -84,29 +84,29 @@ public class calculate_sales {
 				// フィールド数及び支店番号の判定、3以上の場合、エラーメッセージを表示し強制終了
 				if(tmp.length >= 3 || tmp[0].length() != 3){
 					System.out.println("支店定義ファイルのフォーマットが不正です");
+					br.close();
 					return ;
 				}
-				int code = Integer.parseInt(tmp[0]);
+				int code = Integer.parseInt(tmp[0]);		// 支店番号が数字のみで定義されているかどうかを判定
 				branchMapIn.put(tmp[0], tmp[1]);
 				branchMapOut.put(tmp[0], new Long(0));
 				bCodeList.add(tmp[0]);
+
 			}
+			br.close();
 		}
 		catch(FileNotFoundException e){		// 支店定義ファイルが見つからなかった場合の処理
 			System.out.println("支店定義ファイルが存在しません");
-			return;
+			return ;
 		}
-		catch(NumberFormatException e){
+		catch(NumberFormatException e){		// 支店番号の形式が不正だった場合
 			System.out.println("支店定義ファイルのフォーマットが不正です");
 			return ;
 		}
 		catch(Exception e){		// その他の例外に対する処理
 			System.out.println(errmsg);
-			System.out.println("支店定義ファイル");
+			System.out.println(e.getMessage());
 			return ;
-		}
-		finally{
-			br.close();
 		}
 
 
@@ -124,15 +124,14 @@ public class calculate_sales {
 				// フィールド数の及び商品コードの文字数判定、規定以上の場合、エラーメッセージを表示し強制終了
 				if(tmp.length >= 3 || tmp[0].length() != 8){
 					System.out.println("商品定義ファイルのフォーマットが不正です");
+					br.close();
 					return ;
 				}
-				commodityMapIn.put(tmp[0], tmp[1]);	// 商品定義用ArrayListへ要素の追加
+				commodityMapIn.put(tmp[0], tmp[1]);	// 商品定義用HashMapへ要素の追加
 				commodityMapOut.put(tmp[0], new Long(0));
 				cCodeList.add(tmp[0]);
 			}
-
-
-
+			br.close();
 		}
 		catch(FileNotFoundException e){		// 商品定義ファイルが見つからなかった場合の例外処理
 			System.out.println("商品定義ファイルが存在しません");
@@ -142,14 +141,13 @@ public class calculate_sales {
 			System.out.println(errmsg);
 			return ;
 		}
-		finally{
-			br.close();
-		}
 
 
 		/*
 		 * 売上レコードファイル読み込み及び集計処理
 		 */
+
+		// 引数で指定したディレクトリ内にある"*.rcd"ファイルの一覧を取得
 
 		j= 0;
 		for(i = 0; i < filelist.length; i++){
@@ -159,14 +157,16 @@ public class calculate_sales {
 				j++;
 			}
 		}
+
+		// rcdファイルの名前が連番になっているかどうかを判定、なっていない場合はメッセージを出力し終了
 		for(i = 0; i < j - 1; i++){
 			if(Math.abs(rcd[i].compareTo(rcd[i + 1])) != 1){
 				System.out.println("売上ファイル名が連番になっていません");
 				return ;
 			}
 		}
+		// rcdファイルの読み込み
 		try{
-
 			for(i = 0; i < j; i++){
 
 				k = 0;
@@ -176,17 +176,24 @@ public class calculate_sales {
 				br = new BufferedReader(fr);
 
 				while((s = br.readLine()) != null){
-					if(k >= 3){
+
+					// rcdファイルの行数を調べ、4行以上あった場合はエラーメッセージを表示し終了
+
+					if(k > 4){
 						System.out.println("<" + args[0] + fs + rcd[i] + ">のフォーマットが不正です");
+						br.close();
 						return ;
 					}
 					tmp[k] = s;
 					k++;
 
 				}
+				br.close();
 
 				boolean bflg = false;
 				boolean cflg = false;
+
+				// 支店別の売上集計処理
 
 				for(int l = 0; l < bCodeList.size(); l++){
 					if(tmp[0].equals(bCodeList.get(l))){
@@ -239,10 +246,6 @@ public class calculate_sales {
 			System.out.println(errmsg);
 			return;
 		}
-		finally{
-			br.close();
-		}
-
 
 
 		/*
@@ -280,15 +283,11 @@ public class calculate_sales {
 				System.out.println("支店コード：" + b.bCode + "　支店名：" + b.bName + "　売上：" + b.bAmount);
 				bw.write(b.bCode + "," + b.bName + "," + b.bAmount + ls);
 			}
-
+			bw.close();
 		}
 		catch(Exception e){
 			System.out.println(errmsg);
 		}
-		finally{
-			bw.close();
-		}
-
 
 		/*
 		 * 商品別売上集計後ファイル書き出し
@@ -299,7 +298,7 @@ public class calculate_sales {
 		fw = new FileWriter(file);
 		bw = new BufferedWriter(fw);
 		cArry = new Commodity[cCodeList.size()];
-		
+
 		try{
 			Iterator<String> itIn = commodityMapIn.keySet().iterator();
 			i = 0;
@@ -325,12 +324,10 @@ public class calculate_sales {
 				System.out.println("支店コード：" + c.cCode + "　支店名：" + c.cName + "　売上：" + c.cAmount);
 				bw.write(c.cCode + "," + c.cName + "," + c.cAmount + ls);
 			}
+			bw.close();
 		}
 		catch(Exception e){
 			System.out.println(errmsg + ls + e);
-		}
-		finally{
-			bw.close();
 		}
 
 	}
