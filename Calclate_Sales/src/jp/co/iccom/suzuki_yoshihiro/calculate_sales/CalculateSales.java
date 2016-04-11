@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 
@@ -124,8 +125,12 @@ public class CalculateSales {
 		ArrayList<String> rcdList = new ArrayList<String>();		// レコードファイルのファイル名格納
 		String[] filelist = folder.list();							// カレントディレクトリのファイル一覧
 		for(int i = 0; i < filelist.length; i++){
-			if(filelist[i].contains("rcd")){
-				rcdList.add(filelist[i]);
+			// 名前にrcdを含む8文字( + 拡張子3文字)のファイルを検索
+			if(filelist[i].contains(".rcd") && filelist[i].length() == 12){
+				if(filelist[i].substring(8, 12).equals(".rcd")){ // 拡張子がrcdのファイルを検索
+					rcdList.add(filelist[i]);
+					System.out.println(filelist[i]);
+				}
 			}
 		}
 
@@ -133,13 +138,21 @@ public class CalculateSales {
 		 * rcdファイルの名前が連番になっているかどうかを判定、なっていない場合はメッセージを出力し終了
 		 * 連番判定はArrayList二格納された文字列の差を求め、その結果が-1以外となっている場合にのみ
 		 * エラーを出力するものとする
+		 * rcdファイルが1つのみの場合はこの処理をスキップ、0の場合は何もせずプログラムを終了する
 		 */
-		for(int i = 0; i < rcdList.size() - 1; i++){
-			if(rcdList.get(i).compareTo(rcdList.get(i + 1)) != -1){
-				System.out.println("売上ファイル名が連番になっていません");
-				return;
+		if(rcdList.size() >= 2){ // rcdファイルの数が2つ以上の場合
+			Collections.sort(rcdList); // ファイル名の昇順ソート
+			for(int i = 0; i < rcdList.size() - 1; i++){
+
+				if(rcdList.get(i).compareTo(rcdList.get(i + 1)) != -1){
+					System.out.println("売上ファイル名が連番になっていません");
+					return;
+				}
 			}
+		}else if(rcdList.size() == 0){ // rcdファイルが存在しない場合
+				return;
 		}
+
 		// rcdファイルの読み込み
 		for(int i = 0; i < rcdList.size(); i++){
 			File fileRcdIn = new File(folder, rcdList.get(i));
@@ -163,6 +176,7 @@ public class CalculateSales {
 				if(j <= 2){
 					System.out.println("<" + fileRcdIn.getPath() + ">のフォーマットが不正です");
 					System.out.println(j);
+					return;
 				}
 
 				// 支店別の売上集計処理
