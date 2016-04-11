@@ -23,21 +23,17 @@ public class CalculateSales {
 		File folder = new File(args[0]);							// フォルダ操作用
 
 		// 文字列型
-		String reader = "";											// ファイルからの情報読み込み用
+		String reader;											// ファイルからの情報読み込み用
 
 		// 文字列型配列
 		String[] separatedValues;									// ファイルから読み込んだ情報を一時的に保管する
-
-		// 整数型
-
-		int i, j, k;
 
 		/*
 		 * 支店情報ファイル読み込み
 		 */
 
-		HashMap<String, String> branchMapIn = new HashMap<String, String>();// 支店コード・支店名
-		HashMap<String, Long> branchMapOut = new HashMap<String, Long>();	// 支店コード・売上高
+		HashMap<String, String> branchMapName = new HashMap<String, String>();// 支店コード・支店名
+		HashMap<String, Long> branchMapAmount = new HashMap<String, Long>();	// 支店コード・売上高
 		ArrayList<String> branchCodeList = new ArrayList<String>();			// 支店コード用
 		BufferedReader brBranchReader = new BufferedReader(new FileReader(new File(folder, "branch.lst")));
 		try{
@@ -54,16 +50,16 @@ public class CalculateSales {
 				// 支店コードに当たる部分の文字を数字に変換し、エラーを吐くか調べる
 				Integer.parseInt(separatedValues[0]);
 				// 支店コードをキーに、支店名を値として保存
-				branchMapIn.put(separatedValues[0], separatedValues[1]);		
+				branchMapName.put(separatedValues[0], separatedValues[1]);
 				// 支店コードをキーに、売上金額を値(計算前なので0)として保存
-				branchMapOut.put(separatedValues[0], new Long(0));
+				branchMapAmount.put(separatedValues[0], new Long(0));
 				// 支店コードをString型のArrayListに追加
-				branchCodeList.add(separatedValues[0]);		
+				branchCodeList.add(separatedValues[0]);
 			}
 
 		}
 		// 支店定義ファイルが見つからなかった場合の処理
-		catch(FileNotFoundException e){		
+		catch(FileNotFoundException e){
 			System.out.println("支店定義ファイルが存在しません");
 			return;
 		}
@@ -84,8 +80,8 @@ public class CalculateSales {
 		 * 商品情報ファイル読み込み
 		 */
 
-		HashMap<String, String> commodityMapIn = new HashMap<String, String>();			// 商品コード・商品名
-		HashMap<String, Long> commodityMapOut = new HashMap<String, Long>();			// 商品コード・売上高
+		HashMap<String, String> commodityMapName = new HashMap<String, String>();			// 商品コード・商品名
+		HashMap<String, Long> commodityMapAmount = new HashMap<String, Long>();			// 商品コード・売上高
 		ArrayList<String> commodityCodeList = new ArrayList<String>();					// 商品コード用
 		BufferedReader brCommodityReader = new BufferedReader(new FileReader(new File(folder, "commodity.lst")));
 		try{
@@ -99,8 +95,8 @@ public class CalculateSales {
 					System.out.println("商品定義ファイルのフォーマットが不正です");
 					return;
 				}
-				commodityMapIn.put(separatedValues[0], separatedValues[1]);	// 商品定義用HashMapへ要素の追加
-				commodityMapOut.put(separatedValues[0], new Long(0));
+				commodityMapName.put(separatedValues[0], separatedValues[1]);	// 商品定義用HashMapへ要素の追加
+				commodityMapAmount.put(separatedValues[0], new Long(0));
 				commodityCodeList.add(separatedValues[0]);
 			}
 		}
@@ -127,62 +123,77 @@ public class CalculateSales {
 
 		ArrayList<String> rcdList = new ArrayList<String>();		// レコードファイルのファイル名格納
 		String[] filelist = folder.list();							// カレントディレクトリのファイル一覧
-		for(i = 0; i < filelist.length; i++){
+		for(int i = 0; i < filelist.length; i++){
 			if(filelist[i].contains("rcd")){
 				rcdList.add(filelist[i]);
 			}
 		}
 
-		// rcdファイルの名前が連番になっているかどうかを判定、なっていない場合はメッセージを出力し終了
-		for(i = 0; i < rcdList.size() - 1; i++){
-			if(Math.abs(rcdList.get(i).compareTo(rcdList.get(i + 1))) != 1){
+		/*
+		 * rcdファイルの名前が連番になっているかどうかを判定、なっていない場合はメッセージを出力し終了
+		 * 連番判定はArrayList二格納された文字列の差を求め、その結果が-1以外となっている場合にのみ
+		 * エラーを出力するものとする
+		 */
+		for(int i = 0; i < rcdList.size() - 1; i++){
+			if(rcdList.get(i).compareTo(rcdList.get(i + 1)) != -1){
 				System.out.println("売上ファイル名が連番になっていません");
 				return;
 			}
 		}
 		// rcdファイルの読み込み
-		for(i = 0; i < rcdList.size(); i++){
+		for(int i = 0; i < rcdList.size(); i++){
 			File fileRcdIn = new File(folder, rcdList.get(i));
 			BufferedReader brRcdReader = new BufferedReader(new FileReader(fileRcdIn));
 			try{
-				k = 0;
+				int j = 0;
 				separatedValues = new String[3];
 				while((reader = brRcdReader.readLine()) != null){
+					separatedValues[j] = reader;
+					j++;
 
 					// rcdファイルの行数を調べ、4行以上あった場合はエラーメッセージを表示し終了
-					if(k >= 4){
+					if(j >= 4){
 						System.out.println("<" + fileRcdIn.getPath() + ">のフォーマットが不正です");
+						System.out.println(j);
 						return;
 					}
-					separatedValues[k] = reader;
-					k++;
+
 				}
-				boolean bflg = false;
-				boolean cflg = false;
+				// rcdファイルの行数を調べ、2行以下の場合もエラーメッセージを表示し終了
+				if(j <= 2){
+					System.out.println("<" + fileRcdIn.getPath() + ">のフォーマットが不正です");
+					System.out.println(j);
+				}
 
 				// 支店別の売上集計処理
-				for(k = 0; k < branchCodeList.size(); k++){
-					if(separatedValues[0].equals(branchCodeList.get(k))){
-						long calcration = branchMapOut.get(separatedValues[0]);
+				boolean bflg = false;
+				for(j = 0; j < branchCodeList.size(); j++){
+					// あらかじめ読み込んである支店コードと読み込んだrcdファイルの支店コードを比較
+					if(separatedValues[0].equals(branchCodeList.get(j))){
+
+						long calcration = branchMapAmount.get(separatedValues[0]);
 						calcration += Long.parseLong(separatedValues[2]);
 						if(String.valueOf(calcration).length() > 10){		//合計金額の桁数を判定
 							System.out.println("合計金額が10桁を超えました");
 							return;
 						}
-						branchMapOut.put(separatedValues[0], calcration);
+						branchMapAmount.put(separatedValues[0], calcration);
 						bflg = true;
 					}
 				}
-				for(k = 0; k < commodityCodeList.size(); k++){
 
-					if(separatedValues[1].equals(commodityCodeList.get(k))){
-						long calcration = commodityMapOut.get(separatedValues[1]);
+				// 商品別の売上集計処理
+				boolean cflg = false;
+				for(j = 0; j < commodityCodeList.size(); j++){
+
+					if(separatedValues[1].equals(commodityCodeList.get(j))){
+						long calcration = commodityMapAmount.get(separatedValues[1]);
 						calcration += Long.parseLong(separatedValues[2]);
 						if(String.valueOf(calcration).length() > 10){		//合計金額の桁数を判定
 							System.out.println("合計金額が10桁を超えました");
 							return;
 						}
-						commodityMapOut.put(separatedValues[1], calcration);
+						commodityMapAmount.put(separatedValues[1], calcration);
 						cflg = true;
 					}
 				}
@@ -214,20 +225,27 @@ public class CalculateSales {
 		 * 支店別売上集計後ファイル書き出し
 		 */
 
-		BufferedWriter bwBranchWriter = new BufferedWriter(new FileWriter(new File(folder, "branch.out")));;
+		BufferedWriter bwBranchWriter = new BufferedWriter(new FileWriter(new File(folder, "branch.out")));
+
+		/*
+		 * クラス配列の宣言
+		 * 支店コードの一覧を格納したArrayListのサイズでインスタンス化する
+		 *
+		 */
 		Branch[] branchArry = new Branch[branchCodeList.size()];
 		try{
-			for(i = 0; i < branchCodeList.size(); i++){
+			// クラス配列への格納
+			for(int i = 0; i < branchCodeList.size(); i++){
 				branchArry[i] = new Branch(
 						branchCodeList.get(i),
-						branchMapIn.get(branchCodeList.get(i)),
-						branchMapOut.get(branchCodeList.get(i))
+						branchMapName.get(branchCodeList.get(i)),
+						branchMapAmount.get(branchCodeList.get(i))
 						);
 			}
 
 			// 単純選択法による金額順の並べ替え
-			for(i = 0; i < branchArry.length -1; i++){
-				for(j = i + 1; j < branchArry.length; j++){
+			for(int i = 0; i < branchArry.length -1; i++){
+				for(int j = i + 1; j < branchArry.length; j++){
 					if(branchArry[i].bAmount < branchArry[j].bAmount){
 						Branch branchTmp = new Branch();
 						branchTmp = branchArry[i];
@@ -236,11 +254,10 @@ public class CalculateSales {
 					}
 				}
 			}
-			i = 0;
+			// ファイルへの書き出し
 			for(Branch b : branchArry){
-				bwBranchWriter.write(b.bCode + "," + b.bName + "," + b.bAmount + System.getProperty("line.separator"));
-				System.out.println(b.bCode + "," + b.bName + "," + b.bAmount + System.getProperty("line.separator"));
-				i++;
+				bwBranchWriter.write(b.bCode + "," + b.bName + "," + b.bAmount +
+						System.getProperty("line.separator"));
 			}
 		}
 		catch(Exception e){
@@ -254,19 +271,26 @@ public class CalculateSales {
 		 * 商品別売上集計後ファイル書き出し
 		 */
 		BufferedWriter bwCommodityWriter = new BufferedWriter(new FileWriter(new File(folder, "commodity.out")));
+
+		/*
+		 * クラス配列の宣言
+		 * 商品コードの一覧を格納したArrayListのサイズでインスタンス化する
+		 *
+		 */
 		Commodity[] commodityArry = new Commodity[commodityCodeList.size()];
 		try{
-			for(i = 0; i < commodityCodeList.size(); i++){
+			for(int i = 0; i < commodityCodeList.size(); i++){
+				// クラス配列への格納
 				commodityArry[i] = new Commodity(
 						commodityCodeList.get(i),
-						commodityMapIn.get(commodityCodeList.get(i)),
-						commodityMapOut.get(commodityCodeList.get(i))
+						commodityMapName.get(commodityCodeList.get(i)),
+						commodityMapAmount.get(commodityCodeList.get(i))
 						);
 			}
 
 			// 単純選択法による金額降順ソート
-			for(i = 0; i < commodityArry.length -1; i++){
-				for(j = i + 1; j < commodityArry.length; j++){
+			for(int i = 0; i < commodityArry.length -1; i++){
+				for(int j = i + 1; j < commodityArry.length; j++){
 					if(commodityArry[i].cAmount < commodityArry[j].cAmount){
 						Commodity commodityTmp = new Commodity();
 						commodityTmp = commodityArry[i];
@@ -275,12 +299,10 @@ public class CalculateSales {
 					}
 				}
 			}
-			i = 0;
+			// ファイルへの書き出し
 			for(Commodity c : commodityArry){
-				System.out.println("書き込み" + (i + 1) + "行目");
-				bwCommodityWriter.write(c.cCode + "," + c.cName + "," + c.cAmount + System.getProperty("line.separator"));
-				System.out.println(c.cCode + "," + c.cName + "," + c.cAmount + System.getProperty("line.separator"));
-				i++;
+				bwCommodityWriter.write(c.cCode + "," + c.cName + "," + c.cAmount +
+						System.getProperty("line.separator"));
 			}
 		}
 		catch(Exception e){
