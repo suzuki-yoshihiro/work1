@@ -1,6 +1,7 @@
 package jp.co.iccom.suzuki_yoshihiro.calculate_sales;
 
-public class Branch {
+
+public class Branch implements Comparable<Branch> {
 	String bCode, bName;
 	long bAmount;
 
@@ -10,9 +11,14 @@ public class Branch {
 		this.bAmount = amount;
 	}
 	Branch(){
+		this.bCode = "";
+		this.bName = "";
+		this.bAmount = 0;
 	}
-	public int compareTo(Branch b){
-		return (int) (bAmount - this.bAmount);
 
+
+	public int compareTo(Branch b) {
+
+		return (int) (this.bAmount - b.bAmount);
 	}
 }
