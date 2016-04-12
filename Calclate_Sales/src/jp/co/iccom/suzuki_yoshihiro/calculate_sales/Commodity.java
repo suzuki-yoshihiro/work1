@@ -11,11 +11,12 @@ public class Commodity implements Comparable<Commodity>{
 	}
 
 	Commodity() {
-		// TODO 自動生成されたコンストラクター・スタブ
+		this.cCode = "";
+		this.cName = "";
+		this.cAmount = 0;
 	}
 
 	public int compareTo(Commodity c) {
-		System.out.println(this.cAmount + c.cAmount + (this.cAmount - c.cAmount));
 		return (int)(this.cAmount - c.cAmount);
 	}
 }
