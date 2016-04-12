@@ -61,10 +61,9 @@ public class CalculateSales {
 		return true;
 	}
 
-
 	static int getRcdList(File folder, ArrayList<String> rcdList){
 
-		File[] filelist = folder.listFiles();							// カレントディレクトリのファイル一覧
+		File[] filelist = folder.listFiles();
 		for(int i = 0; i < filelist.length; i++){
 			// 名前にrcdを含む8文字( + 拡張子3文字)のファイルを検索
 			if(filelist[i].length() == 12 && filelist[i].toString().endsWith(".rcd") && filelist[i].isFile()){
