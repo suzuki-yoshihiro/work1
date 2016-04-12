@@ -14,71 +14,44 @@ import java.util.HashMap;
 
 public class CalculateSales {
 
-	static boolean readBranchFile(File folder, HashMap<String, String> branchMapName, HashMap<String, Long> branchMapAmount, ArrayList<String> branchCodeList) throws IOException{
+	static boolean readFile(File folder, HashMap<String, String> MapName, HashMap<String, Long> MapAmount, ArrayList<String> CodeList, ArrayList<String> dataTypeList) throws IOException{
 
 		BufferedReader br = null;
 
 		try{
-			br =  new BufferedReader(new FileReader(new File(folder, "branch.lst")));
+			br =  new BufferedReader(new FileReader(new File(folder, dataTypeList.get(0) + ".lst")));
 			String readLine;
+			String pattern;
 
+			// 第5引数の値を基に読み込むファイルの種別にあわせたマッチャーパターンを格納
+			if(dataTypeList.get(0).equals("branch")){
+				pattern = "^\\d{3}$";
+			}else{
+				pattern = "^\\w{8}$";
+			}
 			while((readLine = br.readLine()) != null){
 				// カンマ(,)で内容を区切り、一時保存用の配列へ保存
 				String[] separatedValues = readLine.split(",");
 
-				if(separatedValues.length != 2 || !separatedValues[0].matches("^\\d{3}$")){
-					System.out.println("支店定義ファイルのフォーマットが不正です");
+				if(separatedValues.length != 2 || !separatedValues[0].matches(pattern)){
+					System.out.println(dataTypeList.get(1) + "定義ファイルのフォーマットが不正です");
 					return false;
 				}
-				// 支店コードをキーに、支店名を値として保存
-				branchMapName.put(separatedValues[0], separatedValues[1]);
-				// 支店コードをキーに、売上金額を値(計算前なので0)として保存
-				branchMapAmount.put(separatedValues[0], new Long(0));
-				// 支店コードをString型のArrayListに追加
-				branchCodeList.add(separatedValues[0]);
+				// 支店/商品コードをキーに、支店/商品名を値として保存
+				MapName.put(separatedValues[0], separatedValues[1]);
+				// 支店/商品コードをキーに、売上金額を値(計算前なので0)として保存
+				MapAmount.put(separatedValues[0], new Long(0));
+				// 支店/商品コードをString型のArrayListに追加
+				CodeList.add(separatedValues[0]);
 			}
 
 		}
-		// 支店定義ファイルが見つからなかった場合の処理
+		// 定義ファイルが見つからなかった場合の処理
 		catch(FileNotFoundException e){
-			System.out.println("支店定義ファイルが存在しません");
-			return false;
-		}
-		catch(Exception e){		// その他の例外に対する処理
-			System.out.println("予期せぬエラーが発生しました");
-			return false;
-		}
-		finally{
-			if(br != null)	br.close();
-		}
-		return true;
-	}
-
-	static boolean readCommodityFile(File folder, HashMap<String, String> commodityMapName, HashMap<String, Long> commodityMapAmount, ArrayList<String> commodityCodeList) throws IOException{
-
-		BufferedReader br = null;
-		try{
-			br = new BufferedReader(new FileReader(new File(folder, "commodity.lst")));
-			String readLine;
-			while((readLine = br.readLine()) != null){
-				String[] separatedValues = readLine.split(",");
-				// フィールド数の及び商品コードの文字数判定、規定外の場合、エラーメッセージを表示し強制終了
-				if(separatedValues.length != 2 || !separatedValues[0].matches("^\\w{8}$")){
-					System.out.println("商品定義ファイルのフォーマットが不正です");
-					return false;
-				}
-				commodityMapName.put(separatedValues[0], separatedValues[1]);	// 商品定義用HashMapへ要素の追加
-				commodityMapAmount.put(separatedValues[0], new Long(0));
-				commodityCodeList.add(separatedValues[0]);
-			}
-		}
-		catch(FileNotFoundException e){
-			// 商品定義ファイルが見つからなかった場合の例外処理
-			System.out.println("商品定義ファイルが存在しません");
+			System.out.println(dataTypeList.get(1)  + "定義ファイルが存在しません");
 			return false;
 		}
 		catch(Exception e){
-			// その他の例外に対する処理
 			System.out.println("予期せぬエラーが発生しました");
 			return false;
 		}
@@ -91,12 +64,12 @@ public class CalculateSales {
 
 	static int getRcdList(File folder, ArrayList<String> rcdList){
 
-		String[] filelist = folder.list();							// カレントディレクトリのファイル一覧
+		File[] filelist = folder.listFiles();							// カレントディレクトリのファイル一覧
 		for(int i = 0; i < filelist.length; i++){
 			// 名前にrcdを含む8文字( + 拡張子3文字)のファイルを検索
-			if(filelist[i].length() == 12 && filelist[i].endsWith(".rcd")){
+			if(filelist[i].length() == 12 && filelist[i].toString().endsWith(".rcd") && filelist[i].isFile()){
 				// 拡張子がrcdのファイルを検索
-				rcdList.add(filelist[i]);
+				rcdList.add(filelist[i].toString());
 			}
 		}
 		// mainメソッドに読み込んだ件数を返す
@@ -107,7 +80,7 @@ public class CalculateSales {
 		if(rcdList.size() == 1) return true;
 		for(int i = 0; i < rcdList.size() - 1; i++){
 			try{
-				if((Integer.parseInt(rcdList.get(i).replaceAll(".rcd", "")) - Integer.parseInt(rcdList.get(i + 1).replaceAll(".rcd", "")))!= -1){
+				if((Integer.parseInt(rcdList.get(i).substring(0, 8)) - Integer.parseInt(rcdList.get(i + 1).substring(0, 8)))!= -1){
 					return false;
 				}
 			}
@@ -131,7 +104,7 @@ public class CalculateSales {
 				}
 
 				if(rcdData.size() != 3){
-					System.out.println("<" + folder.getPath() + System.getProperty("file.separator") + rcdList.get(i)  + ">のフォーマットが不正です");
+					System.out.println("<" +rcdList.get(i)  + ">のフォーマットが不正です");
 					return false;
 				}
 
@@ -146,7 +119,7 @@ public class CalculateSales {
 					}
 					branchMapAmount.put(rcdData.get(0), calcration);
 				}else{
-					System.out.println("<" + folder.getPath() + System.getProperty("file.separator") + rcdList.get(i) + ">の支店コードが不正です");
+					System.out.println("<" + rcdList.get(i) + ">の支店コードが不正です");
 					return false;
 				}
 
@@ -160,7 +133,7 @@ public class CalculateSales {
 					}
 					commodityMapAmount.put(rcdData.get(1), calcration);
 				}else{
-					System.out.println("<" + folder.getPath() + System.getProperty("file.separator") + rcdList.get(i) + ">の商品コードが不正です");
+					System.out.println("<" + rcdList.get(i) + ">の商品コードが不正です");
 					return false;
 				}
 			}
@@ -175,23 +148,23 @@ public class CalculateSales {
 		return true;
 	}
 
-	static boolean writeBranchFile(File folder, HashMap<String, String> branchMapName, HashMap<String, Long> branchMapAmount, ArrayList<String> branchCodeList) throws IOException{
-		ArrayList<Branch> branchList = new ArrayList<Branch>();
+	static boolean writeFile(File folder, HashMap<String, String> MapName, HashMap<String, Long> MapAmount, ArrayList<String> CodeList, String dataType) throws IOException{
+		ArrayList<Results> resultsList = new ArrayList<Results>();
 		BufferedWriter bw = null;
 		try{
-			bw = new BufferedWriter(new FileWriter(new File(folder, "branch.out")));
-			for(int i = 0; i < branchCodeList.size(); i++){
-				branchList.add(new Branch(branchCodeList.get(i),
-						branchMapName.get(branchCodeList.get(i)),
-						branchMapAmount.get(branchCodeList.get(i))));
+			bw = new BufferedWriter(new FileWriter(new File(folder,  dataType + ".out")));
+			for(int i = 0; i < CodeList.size(); i++){
+				resultsList.add(new Results(CodeList.get(i),
+						MapName.get(CodeList.get(i)),
+						MapAmount.get(CodeList.get(i))));
 
 			}
-			Collections.sort(branchList);
-			Collections.reverse(branchList);
+			Collections.sort(resultsList);
+			Collections.reverse(resultsList);
 
 			// ファイルへの書き出し
-			for(Branch b : branchList){
-				bw.write(b.bCode + "," + b.bName + "," + b.bAmount);
+			for(Results r : resultsList){
+				bw.write(r.Code + "," + r.Name + "," + r.Amount);
 				bw.newLine();
 			}
 		}
@@ -205,39 +178,6 @@ public class CalculateSales {
 		return true;
 
 	}
-
-	static boolean writeCommodityFile(File folder, HashMap<String, String> commodityMapName, HashMap<String, Long> commodityMapAmount, ArrayList<String> commodityCodeList) throws IOException{
-		ArrayList<Commodity> commodityList = new ArrayList<Commodity>();
-		BufferedWriter bw = null;
-		try{
-			bw = new BufferedWriter(new FileWriter(new File(folder, "commodity.out")));
-			for(int i = 0; i < commodityCodeList.size(); i++){
-				commodityList.add(new Commodity(
-						commodityCodeList.get(i),
-						commodityMapName.get(commodityCodeList.get(i)),
-						commodityMapAmount.get(commodityCodeList.get(i))));
-			}
-
-
-			Collections.sort(commodityList);
-			Collections.reverse(commodityList);
-
-			// ファイルへの書き出し
-			for(Commodity c : commodityList){
-				bw.write(c.cCode + "," + c.cName + "," + c.cAmount);
-				bw.newLine();
-			}
-		}
-		catch(Exception e){
-			System.out.println("予期せぬエラーが発生しました");
-			return false;
-		}
-		finally{
-			if(bw != null)	bw.close();
-		}
-		return true;
-	}
-
 
 	public static void main(String[] args) {
 
@@ -251,11 +191,16 @@ public class CalculateSales {
 		HashMap<String, String> branchMapName = new HashMap<String, String>();// 支店コード・支店名
 		HashMap<String, Long> branchMapAmount = new HashMap<String, Long>();	// 支店コード・売上高
 		ArrayList<String> branchCodeList = new ArrayList<String>();			// 支店コード用
+
 		try{
-			if(!readBranchFile(folder ,branchMapName, branchMapAmount, branchCodeList))	return;
+			ArrayList<String> dataType = new ArrayList<String>();
+			dataType.add(0, "branch");
+			dataType.add(1, "支店");
+			if(!readFile(folder ,branchMapName, branchMapAmount, branchCodeList, dataType))	return;
 		}
 		catch(Exception e){
-			System.out.print("予期せぬエラーが発生しました");
+			System.out.println("予期せぬエラーが発生しました");
+			e.printStackTrace();
 		}
 
 		/*
@@ -266,10 +211,14 @@ public class CalculateSales {
 		ArrayList<String> commodityCodeList = new ArrayList<String>();
 
 		try{
-			if(!readCommodityFile(folder, commodityMapName, commodityMapAmount, commodityCodeList))	return;
+			ArrayList<String> dataType = new ArrayList<String>();
+			dataType.add(0, "commodity");
+			dataType.add(1, "商品");
+			if(!readFile(folder, commodityMapName, commodityMapAmount, commodityCodeList, dataType))	return;
 		}
 		catch(Exception e){
 			System.out.println("予期せぬエラーが発生しました");
+			e.printStackTrace();
 			return;
 		}
 
@@ -300,7 +249,7 @@ public class CalculateSales {
 
 		 // 支店別売上集計後ファイル書き出し
 		try{
-			if(!writeBranchFile(folder, branchMapName, branchMapAmount, branchCodeList))	return;
+			if(!writeFile(folder, branchMapName, branchMapAmount, branchCodeList, "branch"))	return;
 		}
 		catch(Exception e){
 			System.out.println("予期せぬエラーが発生しました");
@@ -309,7 +258,7 @@ public class CalculateSales {
 
 		// 商品別売上集計後ファイル書き出し
 		try{
-			if(!writeCommodityFile(folder, commodityMapName, commodityMapAmount, commodityCodeList))	return;
+			if(!writeFile(folder, commodityMapName, commodityMapAmount, commodityCodeList, "commodity"))	return;
 		}
 		catch(Exception e){
 			System.out.println("予期せぬエラーが発生しました");
