@@ -61,16 +61,17 @@ public class CalculateSales {
 		return true;
 	}
 
-	static void getRcdList(File folder, ArrayList<String> rcdList){
+	static ArrayList<String> getRcdList(File folder){
 
 		File[] folderList = folder.listFiles();
-
+		ArrayList<String> rcdList = new ArrayList<String>();
 		for(int i = 0; i < folderList.length; i++){
 			// 拡張子がrcdのファイルを検索
 			if(folderList[i].getName().length() == 12 && folderList[i].getName().endsWith(".rcd") && folderList[i].isFile()){
 				rcdList.add(folderList[i].getName());
 			}
 		}
+		return rcdList;
 	}
 
 	static boolean isContinuous(ArrayList<String> rcdList){
@@ -226,7 +227,7 @@ public class CalculateSales {
 
 		// 引数で指定したディレクトリ内にある"*.rcd"ファイルの一覧を取得
 		// rcdファイルの一覧を読み込み、内容が0件だった場合は何もせずに終了する
-		getRcdList(folder, rcdList);
+		rcdList = getRcdList(folder);
 		if(rcdList.size() == 0){
 			return;
 		}
