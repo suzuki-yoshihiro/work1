@@ -3,7 +3,6 @@ package jp.co.iccom.suzuki_yoshihiro.calculate_sales;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -20,6 +19,11 @@ public class CalculateSales {
 		BufferedReader br = null;
 
 		try{
+			// 定義ファイルが見つからなかった場合の処理
+			if(!new File(folder, dataType[0] + ".lst").exists()){
+				System.out.println(dataType[1] + "定義ファイルが存在しません");
+				return false;
+			}
 			br =  new BufferedReader(new FileReader(new File(folder, dataType[0] + ".lst")));
 			String readLine;
 			String pattern;
@@ -43,11 +47,6 @@ public class CalculateSales {
 				// 支店/商品コードをキーに、売上金額を値(計算前なので0)として保存
 				mapAmount.put(separatedValues[0], new Long(0));
 			}
-		}
-		// 定義ファイルが見つからなかった場合の処理
-		catch(FileNotFoundException e){
-			System.out.println(dataType[1] + "定義ファイルが存在しません");
-			return false;
 		}
 		// その他未定義のエラーの場合
 		catch(Exception e){
@@ -187,7 +186,7 @@ public class CalculateSales {
 
 	public static void main(String[] args) {
 
-		if(args.length == 0){
+		if(args.length != 1 || !new File(args[0]).exists()){
 			System.out.println("正しくディレクトリを指定してください");
 			return;
 		}
