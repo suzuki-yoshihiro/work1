@@ -187,7 +187,7 @@ public class CalculateSales {
 	public static void main(String[] args) {
 
 		if(args.length != 1 || !new File(args[0]).exists()){
-			System.out.println("正しくディレクトリを指定してください");
+			System.out.println("予期せぬエラーが発生しました");
 			return;
 		}
 
