@@ -8,9 +8,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Set;
 
 
 public class CalculateSales {
@@ -55,28 +55,31 @@ public class CalculateSales {
 			return false;
 		}
 		finally{
-			if(br != null)	br.close();
+			if(br != null){
+				br.close();
+			}
 		}
 		return true;
 	}
 
 	static void getRcdList(File folder, ArrayList<String> rcdList){
 
-		String[] fileName = folder.list();
 		File[] folderList = folder.listFiles();
 
-		for(int i = 0; i < fileName.length; i++){
+		for(int i = 0; i < folderList.length; i++){
 			// 拡張子がrcdのファイルを検索
-			if(fileName[i].length() == 12 && fileName[i].endsWith(".rcd") && folderList[i].isFile()){
-				rcdList.add(fileName[i].toString());
+			if(folderList[i].getName().length() == 12 && folderList[i].getName().endsWith(".rcd") && folderList[i].isFile()){
+				rcdList.add(folderList[i].getName());
 			}
 		}
 	}
 
 	static boolean isContinuous(ArrayList<String> rcdList){
 
-		if(rcdList.size() == 1) return true;
-
+		if(rcdList.size() == 1){
+			return true;
+		}
+		Collections.sort(rcdList);
 		for(int i = 0; i < rcdList.size() - 1; i++){
 			try{
 				if((Integer.parseInt(rcdList.get(i).substring(0, 8)) - Integer.parseInt(rcdList.get(i + 1).substring(0, 8))) != -1){
@@ -122,7 +125,7 @@ public class CalculateSales {
 				}
 				branchMapAmount.put(rcdData.get(0), calcration);
 
-				// 商品別の売上集計処理(処理内容は支店別と同様)]
+				// 商品別の売上集計処理(処理内容は支店別と同様)
 
 				if(!commodityMapAmount.containsKey(rcdData.get(1))){
 					System.out.println(rcdList.get(i) + "の商品コードが不正です");
@@ -140,7 +143,9 @@ public class CalculateSales {
 				return false;
 			}
 			finally{
-				if(br != null)	br.close();
+				if(br != null){
+					br.close();
+				}
 			}
 		}
 		return true;
@@ -149,14 +154,15 @@ public class CalculateSales {
 	static boolean writeFile(File folder, HashMap<String, String> mapName, HashMap<String, Long> mapAmount, String dataType) throws IOException{
 
 		ArrayList<Result> resultList = new ArrayList<Result>();
-		Set<String> codeList = mapAmount.keySet();
+		String[] codeArray = mapAmount.keySet().toArray(new String[mapAmount.size()]);
+		Arrays.sort(codeArray);
 		BufferedWriter bw = null;
 		try{
 			bw = new BufferedWriter(new FileWriter(new File(folder, dataType + ".out")));
-			for(String code : codeList){
+			for(String code : codeArray){
 				resultList.add(new Result(code,
-						mapName.get(code),
-						mapAmount.get(code)));
+							  mapName.get(code),
+							mapAmount.get(code)));
 			}
 			Collections.sort(resultList);
 			Collections.reverse(resultList);
@@ -172,7 +178,9 @@ public class CalculateSales {
 			return false;
 		}
 		finally{
-			if(bw != null)	bw.close();
+			if(bw != null){
+				bw.close();
+			}
 		}
 		return true;
 	}
@@ -186,41 +194,35 @@ public class CalculateSales {
 
 		File folder = new File(args[0]);
 
-		/*
-		 * 支店情報ファイル読み込み
-		 */
-
-		HashMap<String, String> branchMapName = new HashMap<String, String>();// 支店コード・支店名
-		HashMap<String, Long> branchMapAmount = new HashMap<String, Long>();	// 支店コード・売上高
-
+		// 支店情報の読み込み
+		HashMap<String, String> branchMapName = new HashMap<String, String>();
+		HashMap<String, Long> branchMapAmount = new HashMap<String, Long>();
 		try{
 			String[] type = {"branch", "支店"};
 
-			if(!readFile(folder, branchMapName, branchMapAmount, type))	return;
+			if(!readFile(folder, branchMapName, branchMapAmount, type)){
+				return;
+			}
 		}
 		catch(Exception e){
 			System.out.println("予期せぬエラーが発生しました");
 		}
 
-		/*
-		 * 商品情報ファイル読み込み
-		 */
+		// 商品情報の読み込み
 		HashMap<String, String> commodityMapName = new HashMap<String, String>();
 		HashMap<String, Long> commodityMapAmount = new HashMap<String, Long>();
-
 		try{
 			String[] type = {"commodity", "商品"};
-			if(!readFile(folder, commodityMapName, commodityMapAmount, type))	return;
+			if(!readFile(folder, commodityMapName, commodityMapAmount, type)){
+				return;
+			}
 		}
 		catch(Exception e){
 			System.out.println("予期せぬエラーが発生しました");
 			return;
 		}
 
-		/*
-		 * 売上レコードファイル読み込み及び集計処理
-		 */
-
+		// 売上ファイルの読み込み・前処理と計算
 		ArrayList<String> rcdList = new ArrayList<String>();
 
 		// 引数で指定したディレクトリ内にある"*.rcd"ファイルの一覧を取得
@@ -238,7 +240,9 @@ public class CalculateSales {
 
 		// rcdファイルの集計作業
 		try{
-			if(!calculateAmount(folder, branchMapAmount, commodityMapAmount, rcdList))	return;
+			if(!calculateAmount(folder, branchMapAmount, commodityMapAmount, rcdList)){
+				return;
+			}
 		}
 		catch(Exception e){
 			System.out.println("予期せぬエラーが発生しました");
@@ -247,8 +251,12 @@ public class CalculateSales {
 
 		 // 支店別売上集計後ファイル書き出し
 		try{
-			if(!writeFile(folder, branchMapName, branchMapAmount, "branch"))	return;
-			if(!writeFile(folder, commodityMapName, commodityMapAmount, "commodity"))	return;
+			if(!writeFile(folder, branchMapName, branchMapAmount, "branch")){
+				return;
+			}
+			if(!writeFile(folder, commodityMapName, commodityMapAmount, "commodity")){
+				return;
+			}
 		}
 		catch(Exception e){
 			System.out.println("予期せぬエラーが発生しました");
